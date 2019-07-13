@@ -126,38 +126,6 @@ class ClusterExtractor:
         return Kmeans_df
 
 
-class ClusterCategorizer:
-    """
-    Reference for RGB values:
-    https://cdn.sparkfun.com/assets/learn_tutorials/7/1/0/TertiaryColorWheel_Chart.png
-    https://www.indezine.com/products/powerpoint/learn/color/color-rgb.html
-    """
-    def __init__(self):
-        self.primary = {
-            'red': (255, 0, 0),
-            'green': (0, 255, 0),
-            'blue': (0, 0, 255),
-            'black': (0, 0, 0),
-            'white': (255, 255, 255)
-        }
-        self.secondary = {
-            'yellow': (255, 255, 0),
-            'cyan': (0, 255, 255),
-            'magenta': (255, 0, 255)
-        }
-        self.tertiary = {
-            'orange': (255, 128, 0),
-            'yellow-green': (128, 255, 0),  # chartreuse
-            'cyan-green': (0, 255, 128),  # spring
-            'cyan-blue': (0, 128, 255),  # azure
-            'blue-magenta': (128, 0, 255),  # violet
-            'red-magenta': (255, 0, 128)  # rose
-        }
-
-    def categorize(self, mode='secondary'):
-        pass
-
-
 if not args.dataset:
     args.dataset = ['COCO', 'ImageNet', 'Scene']
     print('\nNo specified data set. Will extract from:', args.dataset, '\n')
@@ -189,8 +157,8 @@ for dataset in args.dataset:
             print(time.strftime('%H:%M'), ': Finished', i + 1, 'images.')
 
     if args.save_df is True:
-        txt_filename = dataset + '-filenames.txt'
-        csv_filename = '{}-clusters.csv'.format(dataset)
+        txt_filename = 'data/' + dataset + '-filenames.txt'
+        csv_filename = 'data/{}-clusters.csv'.format(dataset)
 
         with open(txt_filename, 'w+') as f:
             for filename in filenames:
@@ -200,6 +168,7 @@ for dataset in args.dataset:
         print('Color cluster DataFrames of all images from',
               dataset, 'saved to', csv_filename)
         print('Filenames in the same order are saved to', txt_filename)
+
 
 categorizer = ClusterCategorizer()
 if args.secondary is not False:
