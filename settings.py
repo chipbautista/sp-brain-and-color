@@ -1,3 +1,25 @@
-# Store constants here
-IMG_MAT_DIR = '../BOLD5000/Stimuli/all_imgs.mat'
-IMG_DIR = '..data/images/{}.jpg'
+
+BOLD5000_DIR = '../BOLD5000-OpenNEURO/derivatives/'
+FMRI_DIR = (BOLD5000_DIR +
+            'fmriprep/sub-CSI{subj}/ses-{ses}/' +
+            'func/sub-CSI{subj}_ses-{ses}_task-5000scenes_run-{run}' +
+            '_bold_space-T1w_preproc.nii.gz')
+
+SUBJECTS = ['1', '2', '3', '4']
+SESSIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09',
+            '10', '11', '12', '13', '14', '15']
+RUNS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']
+
+"""
+INITIAL_LR
+LR_DECAY
+DECAY_EVERY
+BATCH_SIZE
+DROPOUT_PROB
+"""
+
+DOMINANCE_THRESHOLD = {
+    'primary': 60,
+    'secondary': 50,
+    'tertiary': 40
+}

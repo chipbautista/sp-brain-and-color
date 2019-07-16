@@ -16,14 +16,14 @@ class ClusterCategorizer:
                 'green': (0, 255, 0),
                 'blue': (0, 0, 255),
                 # 'black': (0, 0, 0),
-                'white': (255, 255, 255)
+                # 'white': (255, 255, 255)
             },
             'secondary': {
                 'red': (255, 0, 0),
                 'green': (0, 255, 0),
                 'blue': (0, 0, 255),
                 # 'black': (0, 0, 0),
-                'white': (255, 255, 255),
+                # 'white': (255, 255, 255),
                 'yellow': (255, 255, 0),
                 'cyan': (0, 255, 255),
                 'magenta': (255, 0, 255)
@@ -33,7 +33,7 @@ class ClusterCategorizer:
                 'green': (0, 255, 0),
                 'blue': (0, 0, 255),
                 # 'black': (0, 0, 0),
-                'white': (255, 255, 255),
+                # 'white': (255, 255, 255),
                 'yellow': (255, 255, 0),
                 'cyan': (0, 255, 255),
                 'magenta': (255, 0, 255),
@@ -63,7 +63,7 @@ class ClusterCategorizer:
         percentage_df = pd.DataFrame(columns=columns)
 
         for i, filename in zip(range(0, len(df), 10), filenames):
-            values = df.iloc[i: i + 9]
+            values = df.iloc[i: i + 10]
             row = [filename]
             row.extend([get_percentage(c, 'Primary Color')
                         for c in self.colors['primary']])
