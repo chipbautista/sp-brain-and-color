@@ -2,6 +2,7 @@
 Script to create a data set (x, y) pairs
 from fMRI slices and stimuli dominant colors.
 """
+
 import pandas as pd
 import numpy as np
 from nilearn import image
@@ -21,31 +22,50 @@ def get_dominant(df, level):
 color_df = pd.read_csv('data/image_color_percentages.csv')
 events_df = pd.read_pickle('data/df_events.p')
 
-for subject in SUBJECTS[:1]:
-    fmri_slices = []
-    dominant_colors = {
+for subject in SUBJECTS[:1]:  # 1-4
+    data_set = {
+        'slice_filename': [],
+        'stimulus_filename': [],
         'primary': [],
         'secondary': [],
         'tertiary': []
     }
-    for sess in SESSIONS:
-        for run in RUNS:
-            fmri = image.load_img(FMRI_DIR.format(
-                subj=subject, ses=sess, run=run))
+    for sess in SESSIONS:  # 1 - 15
+        for run in RUNS:  # 1 - 30
+            try:
+                fmri = image.load_img(FMRI_DIR.format(
+                    subj=subject, ses=sess, run=run))
+            except ValueError:
+                print('data for subject:', subject, 'session:', sess, 'run:',
+                      run, 'not found.')
+                continue
+
             stimuli_rows = events_df[
                 (events_df.Subj == int(subject)) &
                 (events_df.Sess == int(sess)) &
                 (events_df.Run == int(run))
             ]
-            for stimuli in stimuli_rows[['onset', 'stim_file']].itertuples():
+            for i, stimuli in enumerate(
+                    stimuli_rows[['onset', 'stim_file']].itertuples()):
                 fmri_idx = int(round(stimuli.onset) / 2)
                 fmri_slice = image.index_img(fmri, fmri_idx)
-                fmri_slices.append(fmri_slice.get_data())
+                # fmri_slices.append(fmri_slice.get_data())
 
                 color_data = color_df[color_df.filename == stimuli.stim_file]
-                for key in dominant_colors:
-                    dominant_colors[key].append(get_dominant(color_data, key))
 
-    np.save('../processed_data/fmri_slices-' + subject, fmri_slices)
-    np.save('../processed_data/colors-' + subject, dominant_colors)
-    print('Data set for subject', subject, 'saved.')
+                slice_filename = '-'.join([sess, run, str(i)])
+                data_set['slice_filename'].append(slice_filename)
+                data_set['slice_filename'].append()
+                data_set['stimulus_filename'].append(stimuli.stim_file)
+
+                # get the dominant color for each level (prim., sec., ter.)
+                for key in ['primary', 'secondary', 'tertiary']:
+                    data_set[key].append(get_dominant(color_data, key))
+
+                np.save(file=SLICE_DIR + slice_filename,
+                        arr=fmri_slice.get_data(), allow_pickle=True)
+
+        print('Data from session:', sess, 'extracted.')
+    csv_filename = EXTRACTED_DATA_DIR + 'data-subj-' + subject + '.csv'
+    pd.DataFrame(data_set).to_csv(csv_filename)
+    print('Data set for subject', subject, 'saved to', csv_filename)
