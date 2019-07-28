@@ -59,6 +59,7 @@ num_epochs = eval(args.num_epochs)
 
 dataset = BOLD5000(args.level)
 model = ConvNet3D(num_outputs=dataset.num_classes)
+print(model)
 
 class_weights = torch.Tensor(
     compute_class_weight('balanced', dataset.classes, dataset.labels))
