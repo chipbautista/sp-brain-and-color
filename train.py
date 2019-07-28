@@ -41,7 +41,7 @@ def iterate(loader):
         targets.extend(labels.cpu().numpy())
 
     return (np.mean(losses), accuracy_score(targets, predictions),
-            f1_score(targets, predictions, average='weighted'),
+            f1_score(targets, predictions, average='micro'),
             confusion_matrix(targets, predictions, dataset.classes))
 
 

@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 from torch.utils.data import Dataset, DataLoader
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import LabelEncoder, minmax_scale
 from sklearn.model_selection import train_test_split
 
 from settings import *
@@ -13,6 +13,11 @@ class BOLD5000:
         _df = pd.read_csv(
             EXTRACTED_DATA_DIR + 'data-subj-{}.csv'.format(subject))
         df = _df[~_df[level].isnull()]
+
+        # hardcoding downsampling ugh...
+        red_rows = df[df[level] == 'red'].index.values
+        rows_to_drop = np.random.choice(red_rows, 2200, replace=False)
+        df = df.drop(rows_to_drop)
 
         self.slice_filenames = df['slice_filename'].values
         self.stimulus_filenames = df['stimulus_filename'].values
@@ -47,7 +52,13 @@ class BOLD5000_Split(Dataset):
         return len(self.slice_filenames)
 
     def __getitem__(self, i):
+        # return (
+        #     np.load(SLICE_DIR + self.slice_filenames[i] + '.npy'),
+        #     self.labels[i]
+        # )
+
+        fmri_slice = np.load(SLICE_DIR + self.slice_filenames[i] + '.npy')
         return (
-            np.load(SLICE_DIR + self.slice_filenames[i] + '.npy'),
+            minmax_scale(fmri_slice.reshape(-1, 1)).reshape(fmri_slice.shape),
             self.labels[i]
         )
