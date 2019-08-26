@@ -4,8 +4,15 @@ FMRI_DIR = (BOLD5000_DIR +
             'fmriprep/sub-CSI{subj}/ses-{ses}/' +
             'func/sub-CSI{subj}_ses-{ses}_task-5000scenes_run-{run}' +
             '_bold_space-T1w_preproc.nii.gz')
+
+ROI_LEFT_DIR = (BOLD5000_DIR +  'roi/sub-CSI{subj}/' 
+				+ 'derivatives-spm-sub-CSI{subj}-sub-CSI{subj}_mask-LH{roi}.nii.gz')
+ROI_RIGHT_DIR = (BOLD5000_DIR +  'roi/sub-CSI{subj}/' 
+				+ 'derivatives-spm-sub-CSI{subj}-sub-CSI{subj}_mask-RH{roi}.nii.gz')
+
 EXTRACTED_DATA_DIR = '../extracted_data/'
 SLICE_DIR = EXTRACTED_DATA_DIR + 'slices/'
+ROI_DIR = EXTRACTED_DATA_DIR + 'roi/'
 
 SUBJECTS = ['1', '2', '3', '4']
 SESSIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09',
