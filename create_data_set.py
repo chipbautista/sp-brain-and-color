@@ -2,12 +2,19 @@
 Script to create a data set (x, y) pairs
 from fMRI slices and stimuli dominant colors.
 """
+from argparse import ArgumentParser
 
 import pandas as pd
 import numpy as np
 from nilearn import image
 
 from settings import *
+
+
+parser = ArgumentParser()
+parser.add_argument('--average-tr34', default=True)
+args = parser.parse_args()
+print(args)
 
 
 def get_dominant(df, level):
@@ -47,15 +54,26 @@ for subject in SUBJECTS[:1]:  # 1-4
             ]
             for i, stimuli in enumerate(
                     stimuli_rows[['onset', 'stim_file']].itertuples()):
-                fmri_idx = int(round(stimuli.onset) / 2)
-                fmri_slice = image.index_img(fmri, fmri_idx)
-                # fmri_slices.append(fmri_slice.get_data())
+                """
+                Stimuli is shown for 1s starting at 6s,
+                and then in 10s intervals.
+
+                Each TR is 2 seconds.
+                Stimuli at 6s corresponds to TR4, (indexed at 3)
+                Peak response is at 2-6 seconds after onset,
+                equivalent to 2-3 TRs later = TR6 and TR7 (indexed at 5 and 6)
+                """
+                onset_tr_idx = int(round(stimuli.onset) / 2)
+                peak_tr_slice = image.index_img(
+                    fmri, onset_tr_idx + 2).get_data()
+                if args.average_tr34:
+                    tr4 = image.index_img(fmri, onset_tr_idx + 3).get_data()
+                    peak_tr_slice = (peak_tr_slice + tr4) / 2
 
                 color_data = color_df[color_df.filename == stimuli.stim_file]
 
-                slice_filename = '-'.join([sess, run, str(i)])
+                slice_filename = '-'.join([subject, sess, run, str(i)])
                 data_set['slice_filename'].append(slice_filename)
-                data_set['slice_filename'].append()
                 data_set['stimulus_filename'].append(stimuli.stim_file)
 
                 # get the dominant color for each level (prim., sec., ter.)
@@ -63,7 +81,7 @@ for subject in SUBJECTS[:1]:  # 1-4
                     data_set[key].append(get_dominant(color_data, key))
 
                 np.save(file=SLICE_DIR + slice_filename,
-                        arr=fmri_slice.get_data(), allow_pickle=True)
+                        arr=peak_tr_slice, allow_pickle=True)
 
         print('Data from session:', sess, 'extracted.')
     csv_filename = EXTRACTED_DATA_DIR + 'data-subj-' + subject + '.csv'

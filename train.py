@@ -8,7 +8,7 @@ from sklearn.metrics import (accuracy_score, f1_score,
                              precision_score, recall_score, confusion_matrix)
 from sklearn.utils.class_weight import compute_class_weight
 
-from model import ConvNet3D
+from model import ConvNet3D, ConvNet3D_Old
 from data import BOLD5000
 from settings import *
 
