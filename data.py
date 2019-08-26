@@ -15,9 +15,9 @@ class BOLD5000:
         df = _df[~_df[level].isnull()]
 
         # hardcoding downsampling ugh...
-        red_rows = df[df[level] == 'red'].index.values
-        rows_to_drop = np.random.choice(red_rows, 2200, replace=False)
-        df = df.drop(rows_to_drop)
+        # red_rows = df[df[level] == 'red'].index.values
+        # rows_to_drop = np.random.choice(red_rows, 2200, replace=False)
+        # df = df.drop(rows_to_drop)
 
         self.slice_filenames = df['slice_filename'].values
         self.stimulus_filenames = df['stimulus_filename'].values
@@ -56,9 +56,9 @@ class BOLD5000_Split(Dataset):
         #     np.load(SLICE_DIR + self.slice_filenames[i] + '.npy'),
         #     self.labels[i]
         # )
-
         fmri_slice = np.load(SLICE_DIR + self.slice_filenames[i] + '.npy')
         return (
-            minmax_scale(fmri_slice.reshape(-1, 1)).reshape(fmri_slice.shape),
+            minmax_scale(fmri_slice.reshape(-1, 1), (-1, 1)
+                         ).reshape(fmri_slice.shape),
             self.labels[i]
         )
