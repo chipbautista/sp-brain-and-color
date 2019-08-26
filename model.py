@@ -14,11 +14,11 @@ class ConvNet3D(torch.nn.Module):
         # theirs is still bigger than this. Can try to increase features later.
 
         # 32, 64, 128, 256 = overfits!
-        _ch_1 = 16
-        _ch_2 = 32
-        _ch_3 = 64
-        # _ch_4 = 32
-        _fc = 512
+        _ch_1 = 32
+        _ch_2 = 64
+        _ch_3 = 128
+        _ch_4 = 128
+        _fc = 1024
 
         # Conv Block 1
         self.conv1_1 = torch.nn.Conv3d(in_channels=1, out_channels=_ch_1,
@@ -58,13 +58,13 @@ class ConvNet3D(torch.nn.Module):
         # self.bn4_2 = torch.nn.BatchNorm3d(num_features=_ch_4)
         # self.bn4_3 = torch.nn.BatchNorm3d(num_features=_ch_4)
 
-        self.fc1 = torch.nn.Linear(6144, _fc)
+        self.fc1 = torch.nn.Linear(1536, _fc)
         self.fc2 = torch.nn.Linear(_fc, _fc)
         self.output = torch.nn.Linear(_fc, num_outputs)
 
         self.maxpool = torch.nn.MaxPool3d(kernel_size=2)
         self.dropout = torch.nn.Dropout3d(p=DROPOUT_PROB)
-        self.activation = torch.nn.ReLU()
+        self.activation = torch.nn.ELU()
 
         self.use_cuda = torch.cuda.is_available()
         if self.use_cuda:
@@ -80,7 +80,7 @@ class ConvNet3D(torch.nn.Module):
 
         # (B, 16, 34, 43, 35)
         out = self.conv1_1(x)
-        out = _activate(out, self.bn1_1)
+        out = _activate(out, self.bn1_1)  # Qureshi did not bn+act after first conv
         out = self.conv1_2(out)
         out = _activate(out, self.bn1_2)
         out = self.maxpool(out)
@@ -99,14 +99,14 @@ class ConvNet3D(torch.nn.Module):
         out = _activate(out, self.bn3_3)
         out = self.maxpool(out)
 
-        # out = self.conv4_1(out)
-        # out = self.bn4_1(self.activation(out))
-        # out = self.conv4_2(out)
-        # out = self.bn4_2(self.activation(out))
-        # out = self.conv4_3(out)
-        # out = self.bn4_3(self.activation(out))
+        #out = self.conv4_1(out)
+        #out = _activate(out, self.bn4_1)
+        #out = self.conv4_2(out)
+        #out = _activate(out, self.bn4_2)
+        #out = self.conv4_3(out)
+        #out = _activate(out, self.bn4_3)
         # out = self.activation(self.bn4(out))
-        # out = self.maxpool(out)
+        out = self.maxpool(out)
 
         out = out.reshape(_batch_size, -1)
         out = self.activation(self.dropout(self.fc1(out)))
