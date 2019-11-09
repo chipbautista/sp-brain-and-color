@@ -19,7 +19,7 @@ def iterate(loader):
     targets = []
     for i, (images, labels) in enumerate(loader):
 
-        images = images.reshape(-1, 1, 71, 89, 72).type(torch.FloatTensor)
+        images = images.reshape(-1, 1, *MIN_3D_SHAPE).type(torch.FloatTensor)
         if model.use_cuda:
             images = images.cuda()
             labels = labels.cuda()
@@ -59,7 +59,7 @@ num_epochs = eval(args.num_epochs)
 
 dataset = BOLD5000(args.level)
 model = ConvNet3D(num_outputs=dataset.num_classes)
-print(model)
+print('----- Model -----\n', model)
 
 class_weights = torch.Tensor(
     compute_class_weight('balanced', dataset.classes, dataset.labels))

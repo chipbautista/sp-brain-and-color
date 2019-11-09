@@ -9,34 +9,43 @@ from settings import *
 
 
 class BOLD5000:
-    def __init__(self, level, subject=1):
-        _df = pd.read_csv(
-            EXTRACTED_DATA_DIR + 'data-subj-{}.csv'.format(subject))
-        df = _df[~_df[level].isnull()]
-
-        # hardcoding downsampling ugh...
-        red_rows = df[df[level] == 'red'].index.values
-        rows_to_drop = np.random.choice(red_rows, 2200, replace=False)
-        df = df.drop(rows_to_drop)
-
-        self.slice_filenames = df['slice_filename'].values
-        self.stimulus_filenames = df['stimulus_filename'].values
-        self.labels = LabelEncoder().fit_transform(df[level].values)
-
-        self.classes = np.unique(self.labels)
-        self.num_classes = len(self.classes)
+    def __init__(self, level, subjects=[1], do_downsample=True):
+        self.stimulus_filenames = []
+        self.slice_filenames = []
+        self.labels = []
 
         print('----- BOLD5000 -----')
-        print('Found {} valid samples out of {}.'.format(
-            len(self.labels), len(_df)))
-        print(df[level].value_counts())
+        print('Subjects:', subjects)
+        print('Downsample:', do_downsample)
+        for subj in subjects:
+            _df = pd.read_csv(
+                EXTRACTED_DATA_DIR + 'data-subj-{}.csv'.format(subj))
+            df = _df[~_df[level].isnull()]
+
+            # hardcoding downsampling ugh...
+            # if do_downsample:
+            #     red_rows = df[df[level] == 'red'].index.values
+            #     rows_to_drop = np.random.choice(red_rows, 2200, replace=False)
+            #     df = df.drop(rows_to_drop)
+
+            self.slice_filenames.extend('{}/'.format(subj) +
+                                        df['slice_filename'].values)
+            self.stimulus_filenames.extend(df['stimulus_filename'].values)
+            # self.labels.extend(df[level].values)
+            self.labels.extend([self.label_scene(filename)
+                                for filename in df['stimulus_filename'].values])
+
+        # self.labels = LabelEncoder().fit_transform(self.labels)
+        self.classes = np.unique(self.labels)
+        self.num_classes = len(self.classes)
+        print('Found {} valid samples'.format(len(self.labels)))
 
     def fit_normalizer(self, train_data):
-        self.normalizer = StandardScaler(with_std=True)  # zero mean only
+        self.normalizer = StandardScaler()
         for i in range(0, len(train_data), 50):
             filenames = train_data[i:i + 50]
             batch = np.array([
-                np.load(SLICE_DIR + filename + '.npy')
+                crop(np.load(SLICE_DIR + filename + '.npy'))
                 for filename in filenames
             ])
             self.normalizer.partial_fit(batch.reshape(len(filenames), -1))
@@ -56,6 +65,13 @@ class BOLD5000:
         return (_get_dataloader(X_train, y_train),
                 _get_dataloader(X_test, y_test))
 
+    def label_scene(self, filename):
+        if filename.startswith('COCO'):
+            return 0
+        if filename.startswith('n') and '_' in filename:
+            return 1
+        return 2
+
 
 class BOLD5000_Split(Dataset):
     def __init__(self, slice_filenames, labels, normalizer):
@@ -71,10 +87,20 @@ class BOLD5000_Split(Dataset):
         #     np.load(SLICE_DIR + self.slice_filenames[i] + '.npy'),
         #     self.labels[i]
         # )
-        fmri_slice = np.load(SLICE_DIR + self.slice_filenames[i] + '.npy')
+        fmri_slice = crop(np.load(SLICE_DIR +
+                                  self.slice_filenames[i] + '.npy'))
         return (
-            self.normalizer.transform(
-                fmri_slice.reshape(1, -1)).reshape(fmri_slice.shape),
-            self.labels[i]
+            self.normalizer.transform(fmri_slice.reshape(1, -1)
+                                      ).reshape(fmri_slice.shape),
+            self.labels[i])
 
-        )
+
+def crop(fmri_volume):
+    """
+    CSI1 Scans: (71, 89, 72)
+    CSI3 Scans: (72, 88, 67)
+
+    => Crop all scans to: (71, 88, 67)
+    """
+    x, y, z = MIN_3D_SHAPE
+    return fmri_volume[:x, :y, :z]

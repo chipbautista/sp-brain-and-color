@@ -14,11 +14,11 @@ class ConvNet3D(torch.nn.Module):
         # theirs is still bigger than this. Can try to increase features later.
 
         # 32, 64, 128, 256 = overfits!
-        _ch_1 = 32
-        _ch_2 = 64
-        _ch_3 = 128
-        _ch_4 = 128
-        _fc = 1024
+        _ch_1 = 16
+        _ch_2 = 32
+        _ch_3 = 64
+        _ch_4 = 512
+        _fc = 2048
 
         # Conv Block 1
         self.conv1_1 = torch.nn.Conv3d(in_channels=1, out_channels=_ch_1,
@@ -33,8 +33,11 @@ class ConvNet3D(torch.nn.Module):
                                        kernel_size=3, stride=1)
         self.conv2_2 = torch.nn.Conv3d(in_channels=_ch_2, out_channels=_ch_2,
                                        kernel_size=3, stride=1)
+        self.conv2_3 = torch.nn.Conv3d(in_channels=_ch_2, out_channels=_ch_2,
+                                       kernel_size=3, stride=1)
         self.bn2_1 = torch.nn.BatchNorm3d(num_features=_ch_2)
         self.bn2_2 = torch.nn.BatchNorm3d(num_features=_ch_2)
+        # self.bn2_3 = torch.nn.BatchNorm3d(num_features=_ch_2)
 
         # Conv Block 3
         self.conv3_1 = torch.nn.Conv3d(in_channels=_ch_2, out_channels=_ch_3,
@@ -43,9 +46,12 @@ class ConvNet3D(torch.nn.Module):
                                        kernel_size=3, stride=1)
         self.conv3_3 = torch.nn.Conv3d(in_channels=_ch_3, out_channels=_ch_3,
                                        kernel_size=3, stride=1)
+        # self.conv3_4 = torch.nn.Conv3d(in_channels=_ch_3, out_channels=_ch_3,
+        #                                kernel_size=3, stride=1)
         self.bn3_1 = torch.nn.BatchNorm3d(num_features=_ch_3)
         self.bn3_2 = torch.nn.BatchNorm3d(num_features=_ch_3)
         self.bn3_3 = torch.nn.BatchNorm3d(num_features=_ch_3)
+        # self.bn3_4 = torch.nn.BatchNorm3d(num_features=_ch_3)
 
         # Conv Block 4
         # self.conv4_1 = torch.nn.Conv3d(in_channels=_ch_3, out_channels=_ch_4,
@@ -58,13 +64,13 @@ class ConvNet3D(torch.nn.Module):
         # self.bn4_2 = torch.nn.BatchNorm3d(num_features=_ch_4)
         # self.bn4_3 = torch.nn.BatchNorm3d(num_features=_ch_4)
 
-        self.fc1 = torch.nn.Linear(1536, _fc)
-        self.fc2 = torch.nn.Linear(_fc, _fc)
+        self.fc1 = torch.nn.Linear(4608, _fc)
+        # self.fc2 = torch.nn.Linear(_fc, _fc)
         self.output = torch.nn.Linear(_fc, num_outputs)
 
         self.maxpool = torch.nn.MaxPool3d(kernel_size=2)
         self.dropout = torch.nn.Dropout3d(p=DROPOUT_PROB)
-        self.activation = torch.nn.ELU()
+        self.activation = torch.nn.ReLU()
 
         self.use_cuda = torch.cuda.is_available()
         if self.use_cuda:
@@ -79,40 +85,43 @@ class ConvNet3D(torch.nn.Module):
         _batch_size = x.shape[0]
 
         # (B, 16, 34, 43, 35)
-        out = self.conv1_1(x)
-        out = _activate(out, self.bn1_1)  # Qureshi did not bn+act after first conv
-        out = self.conv1_2(out)
-        out = _activate(out, self.bn1_2)
-        out = self.maxpool(out)
+        conv1_1 = self.conv1_1(x)
+        conv1_1_act = _activate(conv1_1, self.bn1_1)  # Qureshi did not bn+act after first conv
+        conv1_2 = self.conv1_2(conv1_1_act)
+        conv1_2_act = _activate(conv1_2, self.bn1_2)
+        conv1 = self.maxpool(conv1_2_act)
 
-        out = self.conv2_1(out)
-        out = _activate(out, self.bn2_1)
-        out = self.conv2_2(out)
-        out = _activate(out, self.bn2_2)
-        out = self.maxpool(out)
+        conv2_1 = self.conv2_1(conv1)
+        conv2_1_act = _activate(conv2_1, self.bn2_1)
+        conv2_2 = self.conv2_2(conv2_1_act)
+        conv2_2_act = _activate(conv2_2, self.bn2_2)
+        # out = self.conv2_3(out)
+        # out = _activate(out, self.bn2_3)
+        conv2 = self.maxpool(conv2_2_act)
 
-        out = self.conv3_1(out)
-        out = _activate(out, self.bn3_1)
-        out = self.conv3_2(out)
-        out = _activate(out, self.bn3_2)
-        out = self.conv3_3(out)
-        out = _activate(out, self.bn3_3)
-        out = self.maxpool(out)
+        conv3_1 = self.conv3_1(conv2)
+        conv3_1_act = _activate(conv3_1, self.bn3_1)
+        conv3_2 = self.conv3_2(conv3_1_act)
+        conv3_2_act = _activate(conv3_2, self.bn3_2)
+        conv3_3 = self.conv3_3(conv3_2_act)
+        conv3_3_act = _activate(conv3_3, self.bn3_3)
+        # out = self.conv3_4(out)
+        # out = _activate(out, self.bn3_4)
+        conv3 = self.maxpool(conv3_3_act)
 
-        #out = self.conv4_1(out)
-        #out = _activate(out, self.bn4_1)
-        #out = self.conv4_2(out)
-        #out = _activate(out, self.bn4_2)
-        #out = self.conv4_3(out)
-        #out = _activate(out, self.bn4_3)
+        # conv4_1 = self.conv4_1(conv3)
+        # conv4_1_act = _activate(conv4_1, self.bn4_1)
+        # conv4_2 = self.conv4_2(conv4_1_act)
+        # conv4_2_act = _activate(conv4_2, self.bn4_2)
+        # out = self.conv4_3(out)
+        # out = _activate(out, self.bn4_3)
         # out = self.activation(self.bn4(out))
-        out = self.maxpool(out)
+        # conv4 = self.maxpool(conv4_2_act)
 
-        out = out.reshape(_batch_size, -1)
-        out = self.activation(self.dropout(self.fc1(out)))
-        out = self.activation(self.dropout(self.fc2(out)))
-        out = self.output(out)
-        return out
+        conv_out = conv3.reshape(_batch_size, -1)
+        fc1 = self.activation(self.dropout(self.fc1(conv_out)))
+        # fc2 = self.activation(self.dropout(self.fc2(fc1)))
+        return self.output(fc1)
 
 
 class ConvNet3D_Old(torch.nn.Module):

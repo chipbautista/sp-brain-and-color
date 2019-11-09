@@ -16,9 +16,9 @@ RUNS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10']
 LR_DECAY
 DECAY_EVERY
 """
-BATCH_SIZE = 12
+BATCH_SIZE = 16
 NUM_EPOCHS = 100
-INITIAL_LR = 1e-3
+INITIAL_LR = 0.0005
 DROPOUT_PROB = 0.5
 
 DOMINANCE_THRESHOLD = {
@@ -26,3 +26,5 @@ DOMINANCE_THRESHOLD = {
     'secondary': 50,
     'tertiary': 40
 }
+
+MIN_3D_SHAPE = (71, 88, 67)
